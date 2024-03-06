@@ -59,7 +59,11 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib
+    exposed-modules:  AST,
+                      Token,
+                      Parser,
+                      ASTReducer,
+                      Assembler
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -68,7 +72,8 @@ library
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.2.1
+    build-depends:    base ^>=4.17.2.1,
+                      containers ^>=0.7
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -125,4 +130,5 @@ test-suite simple-compiler-test
     -- Test dependencies.
     build-depends:
         base ^>=4.17.2.1,
+        HUnit ^>=1.6.2.0,
         simple-compiler
