@@ -15,9 +15,10 @@ astReduce ast = case ast of
   Sub x y -> astReduce' $ Sub (astReduce x) (astReduce y)
   Mul x y -> astReduce' $ Mul (astReduce x) (astReduce y)
   Div x y -> astReduce' $ Div (astReduce x) (astReduce y)
-  where astReduce' ast' = case ast' of
-          Add (Imm x) (Imm y) -> Imm (x + y)
-          Sub (Imm x) (Imm y) -> Imm (x - y)
-          Mul (Imm x) (Imm y) -> Imm (x * y)
-          Div (Imm x) (Imm y) -> Imm (x `div` y)
-          other -> other
+  where
+    astReduce' ast' = case ast' of
+      Add (Imm x) (Imm y) -> Imm (x + y)
+      Sub (Imm x) (Imm y) -> Imm (x - y)
+      Mul (Imm x) (Imm y) -> Imm (x * y)
+      Div (Imm x) (Imm y) -> Imm (x `div` y)
+      other -> other
