@@ -12,34 +12,48 @@ newParserTest input expected = TestLabel input $ TestCase (assertEqual ("Input: 
 
 parserTests :: [Test]
 parserTests =
-  [ newParserTest "[] 1"
-                  (Imm 1),
-    newParserTest "[] 1 - 2"
-                  (Sub (Imm 1) (Imm 2)),
-    newParserTest "[ xx yy ] ( xx + yy ) / 2"
-                  (Div (Add (Arg 0) (Arg 1)) (Imm 2)),
-    newParserTest "[ x ] x + 2 * 5"
-                  (Add (Arg 0) (Mul (Imm 2) (Imm 5))),
-    newParserTest "[ a b ] a * a + b * b"
-                  (Add (Mul (Arg 0) (Arg 0)) (Mul (Arg 1) (Arg 1))),
-    newParserTest "[ a b ] a + (a + b) / a"
-                  (Add (Arg 0) (Div (Add (Arg 0) (Arg 1)) (Arg 0))),
-    newParserTest "[ x y z ] x + (x * y) + z"
-                  (Add (Add (Arg 0) (Mul (Arg 0) (Arg 1))) (Arg 2)),
-    newParserTest "[ x y z ] x / (x + y) * z"
-                  (Mul (Div (Arg 0) (Add (Arg 0) (Arg 1))) (Arg 2)),
-    newParserTest "[ x y z ] ( 2*3*x + 5*y - 3*z ) / (1 + 3 + 2*2)"
-                  (Div
-                    (Sub
-                      (Add
-                        (Mul
-                          (Mul (Imm 2) (Imm 3))
-                          (Arg 0))
-                        (Mul (Imm 5) (Arg 1)))
-                      (Mul (Imm 3) (Arg 2)))
-                    (Add
-                      (Add (Imm 1) (Imm 3))
-                      (Mul (Imm 2) (Imm 2))))
+  [ newParserTest
+      "[] 1"
+      (Imm 1),
+    newParserTest
+      "[] 1 - 2"
+      (Sub (Imm 1) (Imm 2)),
+    newParserTest
+      "[ xx yy ] ( xx + yy ) / 2"
+      (Div (Add (Arg 0) (Arg 1)) (Imm 2)),
+    newParserTest
+      "[ x ] x + 2 * 5"
+      (Add (Arg 0) (Mul (Imm 2) (Imm 5))),
+    newParserTest
+      "[ a b ] a * a + b * b"
+      (Add (Mul (Arg 0) (Arg 0)) (Mul (Arg 1) (Arg 1))),
+    newParserTest
+      "[ a b ] a + (a + b) / a"
+      (Add (Arg 0) (Div (Add (Arg 0) (Arg 1)) (Arg 0))),
+    newParserTest
+      "[ x y z ] x + (x * y) + z"
+      (Add (Add (Arg 0) (Mul (Arg 0) (Arg 1))) (Arg 2)),
+    newParserTest
+      "[ x y z ] x / (x + y) * z"
+      (Mul (Div (Arg 0) (Add (Arg 0) (Arg 1))) (Arg 2)),
+    newParserTest
+      "[ x y z ] ( 2*3*x + 5*y - 3*z ) / (1 + 3 + 2*2)"
+      ( Div
+          ( Sub
+              ( Add
+                  ( Mul
+                      (Mul (Imm 2) (Imm 3))
+                      (Arg 0)
+                  )
+                  (Mul (Imm 5) (Arg 1))
+              )
+              (Mul (Imm 3) (Arg 2))
+          )
+          ( Add
+              (Add (Imm 1) (Imm 3))
+              (Mul (Imm 2) (Imm 2))
+          )
+      )
   ]
 
 newASTReducerTest :: AST -> AST -> Test
@@ -52,24 +66,32 @@ astReducerTests =
     newASTReducerTest (Sub (Imm 10) (Imm 2)) (Imm 8),
     newASTReducerTest (Div (Imm 10) (Imm 2)) (Imm 5),
     newASTReducerTest
-                  (Div
-                    (Sub
-                      (Add
-                        (Mul
-                          (Mul (Imm 2) (Imm 3))
-                          (Arg 0))
-                        (Mul (Imm 5) (Arg 1)))
-                      (Mul (Imm 3) (Arg 2)))
-                    (Add
-                      (Add (Imm 1) (Imm 3))
-                      (Mul (Imm 2) (Imm 2))))
-                  (Div
-                    (Sub
-                      (Add
-                        (Mul (Imm 6) (Arg 0))
-                        (Mul (Imm 5) (Arg 1)))
-                      (Mul (Imm 3) (Arg 2)))
-                    (Imm 8))
+      ( Div
+          ( Sub
+              ( Add
+                  ( Mul
+                      (Mul (Imm 2) (Imm 3))
+                      (Arg 0)
+                  )
+                  (Mul (Imm 5) (Arg 1))
+              )
+              (Mul (Imm 3) (Arg 2))
+          )
+          ( Add
+              (Add (Imm 1) (Imm 3))
+              (Mul (Imm 2) (Imm 2))
+          )
+      )
+      ( Div
+          ( Sub
+              ( Add
+                  (Mul (Imm 6) (Arg 0))
+                  (Mul (Imm 5) (Arg 1))
+              )
+              (Mul (Imm 3) (Arg 2))
+          )
+          (Imm 8)
+      )
   ]
 
 newAssemblerTest :: AST -> [Instruction] -> Test
