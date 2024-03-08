@@ -1,28 +1,35 @@
 module Parser (parse) where
 
 import AST
+import Data.List.NonEmpty (NonEmpty (..), dropWhile, nonEmpty, tail)
 import Data.Map qualified as M
-import Data.Maybe (fromJust)
 import Token
 
 type Arguments = M.Map String Int
 
-parseArgs :: [Token] -> (Arguments, [Token])
+parseArgs :: NonEmpty Token -> (Arguments, [Token])
 parseArgs tokens = (M.fromList $ zip argNames [0 ..], rest)
   where
-    argNames = map liftArg $ takeWhile (/= TChar ']') $ tail tokens
-    rest = tail $ dropWhile (/= TChar ']') tokens
+    argNames = map liftArg $ takeWhile (/= TChar ']') $ Data.List.NonEmpty.tail tokens
+    rest = case Data.List.NonEmpty.dropWhile (/= TChar ']') tokens of
+      [] -> error "expected ], but got end of input"
+      (TChar ']' : ts) -> ts
+      _impossible -> error "this is impossible"
     liftArg token = case token of
       TStr arg -> arg
-      _other -> undefined
+      other -> error ("invalid token in arguments list: " ++ show other)
 
 parseFactor :: Arguments -> [Token] -> (AST, [Token])
-parseFactor _ [] = undefined
+parseFactor _ [] = error "expected (, string or integer, but got end of input"
 parseFactor args (t : ts) = case t of
   TInt num -> (Imm num, ts)
-  TStr arg -> (Arg $ fromJust $ M.lookup arg args, ts)
+  TStr arg -> (safeLookup arg, ts)
   TChar '(' -> (fst $ parseExpression args (takeParens (t : ts)), skipParens (t : ts))
-  _other -> undefined
+  other -> error ("expected (, string or integer, but got " ++ show other)
+  where
+    safeLookup arg = case M.lookup arg args of
+      Just num -> Arg num
+      Nothing -> error ("invalid argument: " ++ arg)
 
 skipParens :: [Token] -> [Token]
 skipParens tokens = go tokens 0
@@ -36,7 +43,7 @@ skipParens tokens = go tokens 0
       TChar ')' -> go ts (n - 1)
       _other -> go ts n
     go [] 0 = []
-    go [] _ = undefined
+    go [] _ = error "expected ), but got end of input"
 
 takeParens :: [Token] -> [Token]
 takeParens tokens = reverse $ go tokens 0 []
@@ -44,7 +51,7 @@ takeParens tokens = reverse $ go tokens 0 []
     go :: [Token] -> Int -> [Token] -> [Token]
     go (t : ts) 0 [] = case t of
       TChar '(' -> go ts 1 []
-      _other -> undefined
+      other -> error ("expected (, but got " ++ show other)
     go (t : ts) 1 res = case t of
       TChar '(' -> go ts 2 (TChar '(' : res)
       TChar ')' -> res
@@ -53,7 +60,7 @@ takeParens tokens = reverse $ go tokens 0 []
       TChar '(' -> go ts (n + 1) (TChar '(' : res)
       TChar ')' -> go ts (n - 1) (TChar ')' : res)
       other -> go ts n (other : res)
-    go [] n res = undefined
+    go [] _ _ = error "the number of opening and closing parentheses don't match"
 
 parseTerm :: Arguments -> [Token] -> (AST, [Token])
 parseTerm args tokens =
@@ -61,13 +68,14 @@ parseTerm args tokens =
    in go f1 tokens1
   where
     go acc (op : tokens2)
-      | op == TChar '*' || op == TChar '/' =
+      | op == TChar '*' =
           let (f2, tokens3) = parseFactor args tokens2
-           in go (astOp op acc f2) tokens3
+           in go (Mul acc f2) tokens3
+    go acc (op : tokens2)
+      | op == TChar '/' =
+          let (f2, tokens3) = parseFactor args tokens2
+           in go (Div acc f2) tokens3
     go acc rest = (acc, rest)
-    astOp (TChar '*') = Mul
-    astOp (TChar '/') = Div
-    astOp _ = undefined
 
 parseExpression :: Arguments -> [Token] -> (AST, [Token])
 parseExpression args tokens =
@@ -75,16 +83,22 @@ parseExpression args tokens =
    in go f1 tokens1
   where
     go acc (op : tokens2)
-      | op == TChar '+' || op == TChar '-' =
+      | op == TChar '+' =
           let (f2, tokens3) = parseTerm args tokens2
-           in go (astOp op acc f2) tokens3
+           in go (Add acc f2) tokens3
+    go acc (op : tokens2)
+      | op == TChar '-' =
+          let (f2, tokens3) = parseTerm args tokens2
+           in go (Sub acc f2) tokens3
     go acc rest = (acc, rest)
-    astOp (TChar '+') = Add
-    astOp (TChar '-') = Sub
-    astOp _ = undefined
 
 parse :: [Token] -> AST
-parse tokens = fst $ parseExpression args tokens1
+parse tokens = case nonEmpty tokens of
+  Nothing -> error "input is empty"
+  Just ts -> parse' ts
+
+parse' :: NonEmpty Token -> AST
+parse' tokens = fst $ parseExpression args tokens1
   where
     args' = parseArgs tokens
     args = fst args'
