@@ -7,5 +7,4 @@ data AST
   | Sub AST AST
   | Mul AST AST
   | Div AST AST
-  | ASTUndefined
   deriving (Eq, Show)

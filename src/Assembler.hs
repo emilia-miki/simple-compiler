@@ -23,7 +23,6 @@ optimize (x : ys) = x : optimize ys
 
 assemble' :: AST -> [Instruction]
 assemble' ast = case ast of
-  ASTUndefined -> undefined
   Imm num -> [IM num, PU]
   Arg num -> [AR num, PU]
   Add x y -> assemble' x ++ assemble' y ++ [PO, SW, PO, AD, PU]

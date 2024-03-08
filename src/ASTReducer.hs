@@ -4,7 +4,6 @@ import AST
 
 astReduce :: AST -> AST
 astReduce ast = case ast of
-  ASTUndefined -> ASTUndefined
   Imm x -> Imm x
   Arg x -> Arg x
   Add (Imm x) (Imm y) -> Imm (x + y)
